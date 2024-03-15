@@ -5,22 +5,21 @@ class PersonDetails {
   final String age;
   final String photoUrl;
   final String postId;
-  // final String uid;
+  final String dateTime;
 
   const PersonDetails(
       {required this.name,
       required this.age,
       required this.photoUrl,
       required this.postId,
-      // required this.uid
-      });
+      required this.dateTime});
 
   Map<String, dynamic> toJson() => {
         "name": name,
         "age": age,
         "photoUrl": photoUrl,
         "postId": postId,
-        // "uid": uid
+        "dateTime": dateTime
       };
 
   static PersonDetails fromSnap(DocumentSnapshot snap) {
@@ -30,7 +29,6 @@ class PersonDetails {
         age: snapshot['age'],
         photoUrl: snapshot['photoUrl'],
         postId: snapshot['postId'],
-        // uid: snapshot['uid']
-        );
+        dateTime: snapshot['dateTime']);
   }
 }

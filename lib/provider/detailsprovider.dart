@@ -1,11 +1,14 @@
 import 'dart:typed_data';
 import 'package:add_detals/models/posts.dart';
-import 'package:add_detals/resources/storage_methods.dart';
+import 'package:add_detals/provider/storage_methods.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
-class FirestoreMethods {
+class Details extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // upload details
 
@@ -21,11 +24,14 @@ class FirestoreMethods {
         String photoUrl = await StorageMethods()
             .uploadImageToStorage('profilePics', file, false);
         String postId = const Uuid().v1();
+        DateTime dateTime = DateTime.now();
+
         PersonDetails details = PersonDetails(
-          photoUrl: photoUrl+"postId",
+          photoUrl: photoUrl + "postId",
           name: name,
           age: age,
           postId: postId,
+          dateTime: dateTime.toString(),
         );
 
         await _firestore.collection('persondetails').doc(postId).set(
@@ -36,6 +42,7 @@ class FirestoreMethods {
     } catch (err) {
       res = err.toString();
     }
+    notifyListeners();
     return res;
   }
 
@@ -47,5 +54,13 @@ class FirestoreMethods {
     } catch (e) {
       print(e.toString());
     }
+    notifyListeners();
+  }
+
+  // signout
+
+  Future<void> signOut() async {
+    await _auth.signOut();
+    notifyListeners();
   }
 }

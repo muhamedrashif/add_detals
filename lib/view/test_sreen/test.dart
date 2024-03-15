@@ -10,9 +10,9 @@
 
 // class _SampleState extends State<Sample> {
 //   ScrollController? _chatScrollController;
-//   int loadMoreMsgs = 10; // at first it will load only 25
+//   int loadMoreMsgs = 1; // at first it will load only 25
 //   int a =
-//       50; // 'loadMoreMsgs' will added by 'a' if we load more msgs in listview.
+//      1; // 'loadMoreMsgs' will added by 'a' if we load more msgs in listview.
 
 //   @override
 //   void initState() {
@@ -38,10 +38,10 @@
 //       body: StreamBuilder(
 //         stream: FirebaseFirestore.instance
 //             .collection('persondetails')
-//             // .limit(10)
+//            . orderBy('dateTime', descending: false )
 //             .snapshots(),
 //         builder: (context,
-//             AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>> snapshot) {
+//             snapshot) {
 //           if (snapshot.connectionState == ConnectionState.waiting) {
 //             return const Center(
 //               child: CircularProgressIndicator(),

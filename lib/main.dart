@@ -1,7 +1,9 @@
+import 'package:add_detals/provider/detailsprovider.dart';
 import 'package:add_detals/view/screen/splash_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'otp/otp.dart';
 import 'view/screen/home_screen.dart';
@@ -10,7 +12,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  runApp(MyApp());
+  runApp(
+    MultiProvider(
+      providers: [ChangeNotifierProvider(create: (_) => Details())],
+      child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -50,13 +55,13 @@ class _InitializerWidgetState extends State<InitializerWidget> {
   Widget build(BuildContext context) {
     print("uer ====== " + _user.toString());
     return _isLoading
-        ? Scaffold(
+        ? const Scaffold(
             body: Center(
               child: CircularProgressIndicator(),
             ),
           )
         : _user == null
             ? OtpLoginScreen()
-            : HomeScreen();
+            : const HomeScreen();
   }
 }
