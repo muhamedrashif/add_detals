@@ -21,13 +21,13 @@ class Details extends ChangeNotifier {
     try {
       // ignore: unnecessary_null_comparison
       if (name.isNotEmpty || age.isNotEmpty || file != null) {
-        String photoUrl = await StorageMethods()
-            .uploadImageToStorage('profilePics', file, false);
+        String photoUrl = await
+            StorageMethods().uploadImageToStorage('posts', file, true);
         String postId = const Uuid().v1();
         DateTime dateTime = DateTime.now();
 
         PersonDetails details = PersonDetails(
-          photoUrl: photoUrl + "postId",
+          photoUrl: photoUrl,
           name: name,
           age: age,
           postId: postId,
