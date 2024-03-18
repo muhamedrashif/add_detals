@@ -1,12 +1,11 @@
-import 'dart:developer';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:add_detals/models/posts.dart';
 import 'package:add_detals/otp/otp.dart';
 import 'package:add_detals/provider/detailsprovider.dart';
 import 'package:add_detals/util/text_field_input.dart';
 import 'package:add_detals/util/util.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
@@ -26,6 +25,8 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = false;
   Uint8List? _imageFile;
   final _formkey = GlobalKey<FormState>();
+  // ignore: unused_field
+  CollectionReference? _details;
 
   @override
   void dispose() {
@@ -150,25 +151,23 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  ScrollController? _chatScrollController;
-  int loadMoreMsgs = 10;
-  int a = 10;
+  var scrollController = ScrollController();
 
   @override
   void initState() {
-    _chatScrollController = ScrollController()
-      ..addListener(() {
-        if (_chatScrollController!.position.atEdge) {
-          if (_chatScrollController!.position.pixels == 0)
-            print('ListView scrolled to top');
-          else {
-            setState(() {
-              loadMoreMsgs = loadMoreMsgs + a;
-            });
-            print('ListView scrolled to bottom');
-          }
+    _details = FirebaseFirestore.instance.collection('persondetails');
+    getDocuments();
+    scrollController.addListener(() {
+      if (scrollController.position.atEdge) {
+        if (scrollController.position.pixels == 0)
+          print('ListView scroll at top');
+        else {
+          print('ListView scroll at bottom');
+          getDocumentsNext(); // Load next documents
         }
-      });
+      }
+    });
+
     super.initState();
   }
 
@@ -435,124 +434,121 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
-                Expanded(
-                  child: StreamBuilder(
-                    stream: FirebaseFirestore.instance
-                        .collection('persondetails')
-                        .orderBy('dateTime', descending: true)
-                        .snapshots(),
-                    builder: (context,
-                        // AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>>
-                        snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Align(
-                          alignment: Alignment.bottomCenter,
-                          child: CircularProgressIndicator(),
-                        );
-                      } else {
-                        log(snapshot.data!.docs.length.toString());
-                      }
-                      return ListView.builder(
-                        controller: _chatScrollController,
-                        itemCount: snapshot.data!.docs.length,
-                        itemBuilder: (context, index) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20.0, vertical: 4),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(10),
-                                  color: Colors.teal[200]),
-                              child: ListTile(
-                                leading: CircleAvatar(
-                                  backgroundImage: NetworkImage(
-                                      snapshot.data!.docs[index]['photoUrl']),
-                                  radius: 22,
+
+                listDocument.length != 0
+                    ? Expanded(
+                        child: RefreshIndicator(
+                          onRefresh: getDocuments,
+                          child: ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            controller: scrollController,
+                            itemCount: listDocument.length,
+                            itemBuilder: (context, index) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20.0, vertical: 4),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(10),
+                                      color: Colors.teal[200]),
+                                  child: ListTile(
+                                    leading: CircleAvatar(
+                                      backgroundImage: NetworkImage(
+                                          listDocument[index].photoUrl),
+                                      radius: 22,
+                                    ),
+                                    title: Text(listDocument[index].name,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                    subtitle: Text(listDocument[index].age),
+                                    trailing: InkWell(
+                                        onTap: () {
+                                          showDialog(
+                                            context: context,
+                                            barrierDismissible: false,
+                                            builder: (context) => AlertDialog(
+                                              title: const Text('Delete'),
+                                              content: const Text(
+                                                  'Do you want to Delete'),
+                                              backgroundColor: Colors.teal[50],
+                                              actions: [
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.all(4.0),
+                                                  child: InkWell(
+                                                    onTap: () {
+                                                      Provider.of<Details>(
+                                                              context,
+                                                              listen: false)
+                                                          .deletePost(
+                                                              listDocument[
+                                                                      index]
+                                                                  .postId)
+                                                          .then((value) =>
+                                                              Navigator.pop(
+                                                                  context));
+                                                    },
+                                                    child: Container(
+                                                        height: 30,
+                                                        width: 50,
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(20),
+                                                          color: Colors.teal,
+                                                        ),
+                                                        child: const Center(
+                                                            child: Text(
+                                                          'Yes',
+                                                          style: TextStyle(
+                                                              color:
+                                                                  Colors.white),
+                                                        ))),
+                                                  ),
+                                                ),
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.all(4.0),
+                                                  child: InkWell(
+                                                    onTap: () =>
+                                                        Navigator.pop(context),
+                                                    child: Container(
+                                                        height: 30,
+                                                        width: 50,
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(20),
+                                                          color: Colors.teal,
+                                                        ),
+                                                        child: const Center(
+                                                            child: Text(
+                                                          'No',
+                                                          style: TextStyle(
+                                                              color:
+                                                                  Colors.white),
+                                                        ))),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                        child: const Icon(Icons.delete)),
+                                  ),
                                 ),
-                                title: Text(snapshot.data!.docs[index]['name'],
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold)),
-                                subtitle:
-                                    Text(snapshot.data!.docs[index]['age']),
-                                trailing: InkWell(
-                                    onTap: () {
-                                      showDialog(
-                                        context: context,
-                                        barrierDismissible: false,
-                                        builder: (context) => AlertDialog(
-                                          title: const Text('Delete'),
-                                          content: const Text(
-                                              'Do you want to Delete'),
-                                          backgroundColor: Colors.teal[50],
-                                          actions: [
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.all(4.0),
-                                              child: InkWell(
-                                                onTap: () {
-                                                  Provider.of<Details>(context,
-                                                          listen: false)
-                                                      .deletePost(snapshot
-                                                              .data!.docs[index]
-                                                          ['postId'])
-                                                      .then((value) =>
-                                                          Navigator.pop(
-                                                              context));
-                                                },
-                                                child: Container(
-                                                    height: 30,
-                                                    width: 50,
-                                                    decoration: BoxDecoration(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              20),
-                                                      color: Colors.teal,
-                                                    ),
-                                                    child: const Center(
-                                                        child: Text(
-                                                      'Yes',
-                                                      style: TextStyle(
-                                                          color: Colors.white),
-                                                    ))),
-                                              ),
-                                            ),
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.all(4.0),
-                                              child: InkWell(
-                                                onTap: () =>
-                                                    Navigator.pop(context),
-                                                child: Container(
-                                                    height: 30,
-                                                    width: 50,
-                                                    decoration: BoxDecoration(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              20),
-                                                      color: Colors.teal,
-                                                    ),
-                                                    child: const Center(
-                                                        child: Text(
-                                                      'No',
-                                                      style: TextStyle(
-                                                          color: Colors.white),
-                                                    ))),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                    child: const Icon(Icons.delete)),
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
-                // InkWell(onTap: () {
+                              );
+                            },
+                          ),
+                        ),
+                      )
+                    : const CircularProgressIndicator(),
+
+                //   },
+                // ),
+                // // InkWell(onTap: () {
                 //    Navigator.of(context).pushReplacement(
                 //   MaterialPageRoute(builder: (context) =>  Sample()));
                 // }, child: Text("data"))
@@ -562,5 +558,49 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  late List<PersonDetails> listDocument;
+  late QuerySnapshot collectionState;
+  // Fetch first 15 documents
+  Future<void> getDocuments() async {
+    listDocument = [];
+    var collection = FirebaseFirestore.instance
+        .collection('persondetails')
+        .orderBy('dateTime', descending: true)
+        .limit(10);
+    print('getDocuments');
+    fetchDocuments(collection);
+  }
+
+  // Fetch next 5 documents starting from the last document fetched earlier
+  Future<void> getDocumentsNext() async {
+    // Get the last visible document
+    var lastVisible = collectionState.docs[collectionState.docs.length - 1];
+    print('listDocument legnth: ${collectionState.size} last: $lastVisible');
+
+    var collection = FirebaseFirestore.instance
+        .collection('persondetails')
+        .orderBy('dateTime', descending: true)
+        .startAfterDocument(lastVisible)
+        .limit(10);
+
+    fetchDocuments(collection);
+  }
+
+  fetchDocuments(Query collection) {
+    collection.get().then((value) {
+      setState(() {
+        collectionState =
+            value; // store collection state to set where to start next
+        value.docs.forEach((element) {
+          print('getDocuments ${element.data()}');
+          PersonDetails details = PersonDetails.fromSnap(element);
+          listDocument.add(details); // Add PersonDetails instance to the list
+        });
+      });
+    }).catchError((error) {
+      print("Failed to fetch documents: $error");
+    });
   }
 }
